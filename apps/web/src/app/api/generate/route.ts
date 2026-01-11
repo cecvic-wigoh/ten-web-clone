@@ -219,6 +219,62 @@ function generateThemeCss(theme: VarietyThemeConfig): GeneratedThemeCSS {
     .cta-section p {
       color: white;
     }
+
+    /* Animation Keyframes */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInLeft {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes fadeInRight {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* Animation Classes */
+    .animate-fadeIn { animation: fadeIn 0.6s ease-out both; }
+    .animate-fadeInUp { animation: fadeInUp 0.6s ease-out both; }
+    .animate-fadeInDown { animation: fadeInDown 0.6s ease-out both; }
+    .animate-fadeInLeft { animation: fadeInLeft 0.6s ease-out both; }
+    .animate-fadeInRight { animation: fadeInRight 0.6s ease-out both; }
+    .animate-scaleIn { animation: scaleIn 0.6s ease-out both; }
+
+    /* Animation Delays for Staggered Effects */
+    .animate-delay-100 { animation-delay: 0.1s; }
+    .animate-delay-200 { animation-delay: 0.2s; }
+    .animate-delay-300 { animation-delay: 0.3s; }
+    .animate-delay-400 { animation-delay: 0.4s; }
+    .animate-delay-500 { animation-delay: 0.5s; }
+
+    /* Hover Effects */
+    .hover-lift { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+    .hover-lift:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+
+    .hover-glow { transition: box-shadow 0.3s ease; }
+    .hover-glow:hover { box-shadow: 0 0 20px rgba(var(--color-primary-rgb, 59,130,246), 0.4); }
+
+    .hover-scale { transition: transform 0.3s ease; }
+    .hover-scale:hover { transform: scale(1.05); }
   `;
 
   // Generate Google Fonts URL
