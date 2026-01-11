@@ -3,14 +3,13 @@
 import { useState, useCallback } from 'react';
 import { type PromptInputData } from '@/components/PromptInput';
 import { SimplePromptInput } from '@/components/SimplePromptInput';
+import { OnboardingFlow } from '@/components/onboarding';
 import { GenerationProgress, type GenerationStep } from '@/components/GenerationProgress';
 import { Preview, type PreviewPage, type VarietyTheme } from '@/components/Preview';
-
-// ============================================================================
-// Types
-// ============================================================================
+import { type OnboardingData } from '@/types/onboarding';
 
 type AppState = 'input' | 'generating' | 'preview';
+type InputMode = 'quick' | 'guided';
 
 interface GenerationState {
   currentStep: GenerationStep;
@@ -24,12 +23,9 @@ interface VarietyThemeData {
   fontsUrl?: string;
 }
 
-// ============================================================================
-// Component
-// ============================================================================
-
 export default function HomePage() {
   const [appState, setAppState] = useState<AppState>('input');
+  const [inputMode, setInputMode] = useState<InputMode>('guided');
   const [generationState, setGenerationState] = useState<GenerationState>({
     currentStep: 'structure',
     message: '',
@@ -38,7 +34,7 @@ export default function HomePage() {
   const [inputData, setInputData] = useState<PromptInputData | null>(null);
   const [varietyTheme, setVarietyTheme] = useState<VarietyThemeData | null>(null);
 
-  const handleSubmit = useCallback(async (data: PromptInputData) => {
+  const handleSubmit = useCallback(async (data: PromptInputData | OnboardingData) => {
     setInputData(data);
     setAppState('generating');
     setGenerationState({ currentStep: 'structure', message: 'Starting generation...' });
@@ -189,12 +185,45 @@ export default function HomePage() {
               Create your website with AI
             </h2>
             <p className="text-xl text-gray-600">
-              Just describe what you need
+              {inputMode === 'guided' ? 'Answer a few questions to get started' : 'Just describe what you need'}
             </p>
           </div>
 
+          <div className="flex justify-center mb-6">
+            <div className="inline-flex rounded-lg border border-gray-200 p-1 bg-gray-50">
+              <button
+                onClick={() => setInputMode('quick')}
+                className={`
+                  px-4 py-2 rounded-md text-sm font-medium transition-all
+                  ${inputMode === 'quick'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                  }
+                `}
+              >
+                Quick Mode
+              </button>
+              <button
+                onClick={() => setInputMode('guided')}
+                className={`
+                  px-4 py-2 rounded-md text-sm font-medium transition-all
+                  ${inputMode === 'guided'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                  }
+                `}
+              >
+                Guided Mode
+              </button>
+            </div>
+          </div>
+
           <div className="bg-white rounded-2xl shadow-xl p-8 md:p-10">
-            <SimplePromptInput onSubmit={handleSubmit} />
+            {inputMode === 'quick' ? (
+              <SimplePromptInput onSubmit={handleSubmit} />
+            ) : (
+              <OnboardingFlow onSubmit={handleSubmit} />
+            )}
           </div>
         </div>
       )}
