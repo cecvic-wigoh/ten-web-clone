@@ -6,6 +6,7 @@
  */
 
 import type { SectionType } from './schemas';
+import { getSectionsForGoal, type SiteGoal } from './goals';
 
 // ============================================================================
 // Section Recommendations by Business Type
@@ -397,3 +398,18 @@ Hint: For this type of business, consider including these sections: ${recommende
 
   return basePrompt;
 }
+
+export function buildUserPromptWithGoal(
+  businessDescription: string,
+  siteGoal: SiteGoal
+): string {
+  const basePrompt = buildUserPrompt(businessDescription);
+  const recommended = getSectionsForGoal(siteGoal).join(', ');
+  
+  return `${basePrompt}
+
+Recommended sections for ${siteGoal} goal: ${recommended}
+
+Note: Use these sections as guidance. You may adjust based on the specific business needs, but respect the maximum of 8 sections per page.`;
+}
+

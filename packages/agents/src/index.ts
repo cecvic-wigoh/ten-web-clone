@@ -86,8 +86,18 @@ export {
   buildSystemPrompt,
   buildUserPrompt,
   buildUserPromptWithHint,
+  buildUserPromptWithGoal,
   SECTION_RECOMMENDATIONS,
 } from './structure/prompts';
+
+// Structure Goals
+export {
+  GOAL_SECTION_MAP,
+  getSectionsForGoal,
+  isValidGoal,
+  getAllGoals,
+  type SiteGoal,
+} from './structure/goals';
 
 // Content Agent
 export {

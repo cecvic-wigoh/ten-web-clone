@@ -8,7 +8,8 @@
 import type { ClaudeClient } from '../client';
 import type { TokenUsage } from '../types';
 import { SiteStructureSchema, type SiteStructure } from './schemas';
-import { buildSystemPrompt, buildUserPrompt } from './prompts';
+import { buildSystemPrompt, buildUserPrompt, buildUserPromptWithGoal } from './prompts';
+import type { SiteGoal } from './goals';
 
 // ============================================================================
 // Types
@@ -18,13 +19,10 @@ import { buildSystemPrompt, buildUserPrompt } from './prompts';
  * Input for structure generation
  */
 export interface GenerationInput {
-  /** Description of the business/website */
   businessDescription: string;
-  /** Optional business type hint for better recommendations */
   businessType?: string;
-  /** Override max tokens */
+  siteGoal?: SiteGoal;
   maxTokens?: number;
-  /** Override temperature */
   temperature?: number;
 }
 
@@ -74,7 +72,9 @@ export function createStructureAgent(client: ClaudeClient): StructureAgent {
     async generate(input: GenerationInput): Promise<GenerationResult> {
       try {
         const systemPrompt = buildSystemPrompt();
-        const userPrompt = buildUserPrompt(input.businessDescription);
+        const userPrompt = input.siteGoal
+          ? buildUserPromptWithGoal(input.businessDescription, input.siteGoal)
+          : buildUserPrompt(input.businessDescription);
 
         const result = await client.generateStructuredOutput({
           systemPrompt,
