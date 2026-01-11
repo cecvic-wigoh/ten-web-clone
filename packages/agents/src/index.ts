@@ -222,3 +222,28 @@ export {
   type SizeRecommendation,
   type SrcsetOptions,
 } from './image/optimizer';
+
+// Variety Engine
+export {
+  generateTheme,
+  detectIndustry,
+  getIndustryPreset,
+  getLayoutWeights,
+  selectLayout,
+  selectPageLayouts,
+  INDUSTRY_PRESETS,
+  type ThemeConfig as VarietyThemeConfig,
+  type ThemeColors,
+  type ThemeTypography,
+  type ThemeStyle,
+  type ThemeGenerationInput,
+  type IndustryType,
+  type IndustryPreset,
+  type LayoutWeights,
+  type LayoutSection,
+  type HeroLayoutType,
+  type FeaturesLayoutType,
+  type TestimonialsLayoutType,
+  type CtaLayoutType,
+  type FooterLayoutType,
+} from './variety';

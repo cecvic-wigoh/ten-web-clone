@@ -27,6 +27,96 @@ export const SectionType = z.enum([
 export type SectionType = z.infer<typeof SectionType>;
 
 // ============================================================================
+// Layout Templates - Provide variety in how sections are displayed
+// ============================================================================
+
+/**
+ * Hero layout options
+ * - centered: Traditional centered text over image
+ * - split-left: Content on left, image on right
+ * - split-right: Image on left, content on right
+ * - minimal: Simple text, no background image, clean typography
+ * - fullscreen: Full viewport height, immersive
+ */
+export const HeroLayout = z.enum([
+  'centered',
+  'split-left',
+  'split-right',
+  'minimal',
+  'fullscreen',
+]);
+
+export type HeroLayout = z.infer<typeof HeroLayout>;
+
+/**
+ * Features layout options
+ * - grid-3: Three equal columns
+ * - grid-4: Four equal columns
+ * - grid-2: Two columns, larger cards
+ * - cards: Card-style with shadows and borders
+ * - alternating: Zigzag pattern, icon/image alternates sides
+ * - icon-left: Icons on left, text on right (list style)
+ */
+export const FeaturesLayout = z.enum([
+  'grid-3',
+  'grid-4',
+  'grid-2',
+  'cards',
+  'alternating',
+  'icon-left',
+]);
+
+export type FeaturesLayout = z.infer<typeof FeaturesLayout>;
+
+/**
+ * Testimonials layout options
+ * - cards: Card grid with equal-sized testimonials
+ * - single-large: One large featured testimonial
+ * - quote-wall: Masonry-style quote grid
+ * - centered: Single centered testimonial (good for 1-2)
+ */
+export const TestimonialsLayout = z.enum([
+  'cards',
+  'single-large',
+  'quote-wall',
+  'centered',
+]);
+
+export type TestimonialsLayout = z.infer<typeof TestimonialsLayout>;
+
+/**
+ * CTA layout options
+ * - centered: Traditional centered CTA with background
+ * - split: Text on one side, form/button on other
+ * - banner: Full-width thin banner style
+ * - card: Floating card with shadow
+ */
+export const CtaLayout = z.enum([
+  'centered',
+  'split',
+  'banner',
+  'card',
+]);
+
+export type CtaLayout = z.infer<typeof CtaLayout>;
+
+/**
+ * Footer layout options
+ * - columns: Multi-column with navigation links
+ * - minimal: Simple single-line footer
+ * - centered: Centered content, stacked
+ * - mega: Large footer with multiple sections
+ */
+export const FooterLayout = z.enum([
+  'columns',
+  'minimal',
+  'centered',
+  'mega',
+]);
+
+export type FooterLayout = z.infer<typeof FooterLayout>;
+
+// ============================================================================
 // Section Config Schemas
 // ============================================================================
 
@@ -34,12 +124,16 @@ export type SectionType = z.infer<typeof SectionType>;
  * Hero section configuration - maps to createHeroPattern
  */
 export const HeroConfigSchema = z.object({
+  layout: HeroLayout.optional().default('centered'),
   heading: z.string(),
   subheading: z.string(),
   buttonText: z.string().optional(),
   buttonUrl: z.string().optional(),
+  secondaryButtonText: z.string().optional(),
+  secondaryButtonUrl: z.string().optional(),
   backgroundImage: z.string().optional(),
   backgroundOverlay: z.number().min(0).max(100).optional(),
+  alignment: z.enum(['left', 'center', 'right']).optional().default('center'),
 });
 
 export type HeroConfig = z.infer<typeof HeroConfigSchema>;
@@ -59,8 +153,11 @@ export type FeatureItem = z.infer<typeof FeatureItemSchema>;
  * Features section configuration - maps to createFeaturesPattern
  */
 export const FeaturesConfigSchema = z.object({
+  layout: FeaturesLayout.optional().default('grid-3'),
   title: z.string(),
+  subtitle: z.string().optional(),
   features: z.array(FeatureItemSchema),
+  columns: z.number().min(2).max(4).optional(),
 });
 
 export type FeaturesConfig = z.infer<typeof FeaturesConfigSchema>;
@@ -69,11 +166,15 @@ export type FeaturesConfig = z.infer<typeof FeaturesConfigSchema>;
  * CTA section configuration - maps to createCtaPattern
  */
 export const CtaConfigSchema = z.object({
+  layout: CtaLayout.optional().default('centered'),
   heading: z.string(),
   description: z.string(),
   buttonText: z.string(),
   buttonUrl: z.string(),
+  secondaryButtonText: z.string().optional(),
+  secondaryButtonUrl: z.string().optional(),
   backgroundColor: z.string().optional(),
+  backgroundImage: z.string().optional(),
 });
 
 export type CtaConfig = z.infer<typeof CtaConfigSchema>;
@@ -94,7 +195,9 @@ export type TestimonialItem = z.infer<typeof TestimonialItemSchema>;
  * Testimonials section configuration - maps to createTestimonialsPattern
  */
 export const TestimonialsConfigSchema = z.object({
+  layout: TestimonialsLayout.optional().default('cards'),
   title: z.string(),
+  subtitle: z.string().optional(),
   testimonials: z.array(TestimonialItemSchema),
 });
 
@@ -170,9 +273,11 @@ export type SocialLink = z.infer<typeof SocialLinkSchema>;
  * Footer section configuration - maps to createFooterPattern
  */
 export const FooterConfigSchema = z.object({
+  layout: FooterLayout.optional().default('columns'),
   columns: z.array(FooterColumnSchema),
   copyright: z.string(),
   socialLinks: z.array(SocialLinkSchema).optional(),
+  showNewsletter: z.boolean().optional(),
 });
 
 export type FooterConfig = z.infer<typeof FooterConfigSchema>;

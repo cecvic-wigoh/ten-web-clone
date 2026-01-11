@@ -19,6 +19,7 @@ export {
   createCtaPattern,
   createTestimonialsPattern,
   createFooterPattern,
+  createPatternFromSection,
   type PatternConfig,
   type HeroConfig,
   type FeaturesConfig,
@@ -29,6 +30,8 @@ export {
   type TestimonialItem,
   type FooterColumn,
   type SocialLink,
+  type SectionType,
+  type SectionInput,
 } from './patterns';
 
 // Theme Generator

@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { PromptInput, type PromptInputData } from '@/components/PromptInput';
+import { type PromptInputData } from '@/components/PromptInput';
+import { SimplePromptInput } from '@/components/SimplePromptInput';
 import { GenerationProgress, type GenerationStep } from '@/components/GenerationProgress';
-import { Preview, type PreviewPage } from '@/components/Preview';
+import { Preview, type PreviewPage, type VarietyTheme } from '@/components/Preview';
 
 // ============================================================================
 // Types
@@ -15,6 +16,12 @@ interface GenerationState {
   currentStep: GenerationStep;
   message: string;
   error?: string;
+}
+
+interface VarietyThemeData {
+  config?: VarietyTheme['config'];
+  css?: string;
+  fontsUrl?: string;
 }
 
 // ============================================================================
@@ -29,6 +36,7 @@ export default function HomePage() {
   });
   const [previewPages, setPreviewPages] = useState<PreviewPage[]>([]);
   const [inputData, setInputData] = useState<PromptInputData | null>(null);
+  const [varietyTheme, setVarietyTheme] = useState<VarietyThemeData | null>(null);
 
   const handleSubmit = useCallback(async (data: PromptInputData) => {
     setInputData(data);
@@ -78,11 +86,17 @@ export default function HomePage() {
 
               case 'preview':
                 setPreviewPages(event.blocks);
+                if (event.varietyTheme) {
+                  setVarietyTheme(event.varietyTheme);
+                }
                 setAppState('preview');
                 break;
 
               case 'complete':
                 setPreviewPages(event.result?.pages || []);
+                if (event.result?.varietyTheme) {
+                  setVarietyTheme(event.result.varietyTheme);
+                }
                 setAppState('preview');
                 break;
 
@@ -121,6 +135,7 @@ export default function HomePage() {
         body: JSON.stringify({
           pages: previewPages,
           businessName: inputData.businessName,
+          varietyTheme: varietyTheme,
         }),
       });
 
@@ -156,6 +171,7 @@ export default function HomePage() {
     setAppState('input');
     setPreviewPages([]);
     setInputData(null);
+    setVarietyTheme(null);
     setGenerationState({ currentStep: 'structure', message: '' });
   }, []);
 
@@ -167,19 +183,18 @@ export default function HomePage() {
   return (
     <div className="space-y-8">
       {appState === 'input' && (
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Create Your Website
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Create your website with AI
             </h2>
-            <p className="text-gray-600">
-              Describe your business and let AI generate a professional WordPress
-              website for you.
+            <p className="text-xl text-gray-600">
+              Just describe what you need
             </p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <PromptInput onSubmit={handleSubmit} showColorPreferences />
+          <div className="bg-white rounded-2xl shadow-xl p-8 md:p-10">
+            <SimplePromptInput onSubmit={handleSubmit} />
           </div>
         </div>
       )}
@@ -224,7 +239,11 @@ export default function HomePage() {
             </button>
           </div>
           <div className="bg-white rounded-xl shadow-lg overflow-hidden h-[700px]">
-            <Preview pages={previewPages} onDeploy={handleDeploy} />
+            <Preview
+              pages={previewPages}
+              onDeploy={handleDeploy}
+              varietyTheme={varietyTheme || undefined}
+            />
           </div>
         </div>
       )}
