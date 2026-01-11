@@ -101,6 +101,81 @@ export interface FooterConfig {
   showNewsletter?: boolean;
 }
 
+export type PricingLayout = 'cards' | 'comparison' | 'minimal';
+export type TeamLayout = 'grid' | 'cards' | 'minimal';
+export type StatsLayout = 'row' | 'grid' | 'cards';
+export type LogoCloudLayout = 'row' | 'grid';
+export type FAQLayout = 'accordion' | 'list';
+
+export interface PricingPlan {
+  name: string;
+  price: string;
+  period?: string;
+  features: string[];
+  ctaText: string;
+  ctaUrl: string;
+  highlighted?: boolean;
+}
+
+export interface PricingConfig {
+  layout?: PricingLayout;
+  title: string;
+  subtitle?: string;
+  plans: PricingPlan[];
+}
+
+export interface TeamMember {
+  name: string;
+  role: string;
+  bio?: string;
+  image?: string;
+}
+
+export interface TeamConfig {
+  layout?: TeamLayout;
+  title: string;
+  subtitle?: string;
+  members: TeamMember[];
+}
+
+export interface StatItem {
+  value: string;
+  label: string;
+  prefix?: string;
+  suffix?: string;
+}
+
+export interface StatsConfig {
+  layout?: StatsLayout;
+  title?: string;
+  subtitle?: string;
+  stats: StatItem[];
+}
+
+export interface LogoItem {
+  imageUrl: string;
+  alt: string;
+  url?: string;
+}
+
+export interface LogoCloudConfig {
+  layout?: LogoCloudLayout;
+  title?: string;
+  logos: LogoItem[];
+}
+
+export interface FAQItem {
+  question: string;
+  answer: string;
+}
+
+export interface FAQConfig {
+  layout?: FAQLayout;
+  title: string;
+  subtitle?: string;
+  items: FAQItem[];
+}
+
 // ============================================================================
 // Hero Pattern - Multiple Layout Variants
 // ============================================================================
@@ -1569,12 +1644,290 @@ function createMegaFooter(config: FooterConfig): BlockNode {
   };
 }
 
+export function createPricingPattern(config: PricingConfig): BlockNode {
+  const layout = config.layout || 'cards';
+  switch (layout) {
+    case 'comparison':
+      return createComparisonPricing(config);
+    case 'minimal':
+      return createMinimalPricing(config);
+    case 'cards':
+    default:
+      return createCardsPricing(config);
+  }
+}
 
-// ============================================================================
-// Convenience Function: Create Pattern from Section
-// ============================================================================
+function createCardsPricing(config: PricingConfig): BlockNode {
+  const { title, subtitle, plans } = config;
+  
+  const planColumns: BlockNode[] = plans.map((plan) => {
+    const featureList = plan.features.map(f => `<li style="margin-bottom:8px;">✓ ${f}</li>`).join('');
+    
+    return {
+      name: 'core/column',
+      attributes: {
+        style: {
+          border: { radius: '12px', width: plan.highlighted ? '2px' : '1px', color: plan.highlighted ? 'var(--color-primary)' : '#e5e7eb' },
+          spacing: { padding: { top: '30px', bottom: '30px', left: '24px', right: '24px' } },
+        },
+        backgroundColor: 'white',
+      },
+      innerBlocks: [
+        { name: 'core/heading', attributes: { level: 3, textAlign: 'center' }, innerContent: [plan.name] },
+        { name: 'core/paragraph', attributes: { align: 'center', fontSize: 'xx-large', style: { typography: { fontWeight: '700' } } }, innerContent: [`${plan.price}${plan.period ? `<span style="font-size:0.5em;font-weight:400;">/${plan.period}</span>` : ''}`] },
+        { name: 'core/separator', attributes: { style: { spacing: { margin: { top: '20px', bottom: '20px' } } } }, innerContent: [] },
+        { name: 'core/html', attributes: {}, innerContent: [`<ul style="list-style:none;padding:0;margin:0 0 24px 0;">${featureList}</ul>`] },
+        { name: 'core/buttons', attributes: { layout: { type: 'flex', justifyContent: 'center' } }, innerBlocks: [{ name: 'core/button', attributes: { url: plan.ctaUrl, style: { border: { radius: '8px' } } }, innerContent: [plan.ctaText] }], innerContent: [null] },
+      ],
+      innerContent: [null, null, null, null, null],
+    };
+  });
 
-export type SectionType = 'hero' | 'features' | 'cta' | 'testimonials' | 'gallery' | 'contact' | 'footer';
+  const innerBlocks: BlockNode[] = [
+    { name: 'core/heading', attributes: { level: 2, textAlign: 'center' }, innerContent: [title] },
+  ];
+  if (subtitle) innerBlocks.push({ name: 'core/paragraph', attributes: { align: 'center' }, innerContent: [subtitle] });
+  innerBlocks.push({ name: 'core/spacer', attributes: { height: '40px' }, innerContent: [] });
+  innerBlocks.push({ name: 'core/columns', attributes: { isStackedOnMobile: true }, innerBlocks: planColumns, innerContent: planColumns.map(() => null) });
+
+  return { name: 'core/group', attributes: { layout: { type: 'constrained' }, style: { spacing: { padding: { top: '80px', bottom: '80px' } } } }, innerBlocks, innerContent: innerBlocks.map(() => null) };
+}
+
+function createComparisonPricing(config: PricingConfig): BlockNode {
+  const { title, subtitle, plans } = config;
+  const allFeatures = [...new Set(plans.flatMap(p => p.features))];
+  
+  const headerRow = `<tr><th></th>${plans.map(p => `<th style="padding:16px;text-align:center;font-weight:600;">${p.name}<br/><span style="font-size:1.5em;">${p.price}</span></th>`).join('')}</tr>`;
+  const featureRows = allFeatures.map(f => `<tr><td style="padding:12px;border-bottom:1px solid #e5e7eb;">${f}</td>${plans.map(p => `<td style="padding:12px;text-align:center;border-bottom:1px solid #e5e7eb;">${p.features.includes(f) ? '✓' : '—'}</td>`).join('')}</tr>`).join('');
+  const ctaRow = `<tr><td></td>${plans.map(p => `<td style="padding:16px;text-align:center;"><a href="${p.ctaUrl}" style="display:inline-block;padding:12px 24px;background:var(--color-primary);color:white;border-radius:8px;text-decoration:none;">${p.ctaText}</a></td>`).join('')}</tr>`;
+
+  const innerBlocks: BlockNode[] = [
+    { name: 'core/heading', attributes: { level: 2, textAlign: 'center' }, innerContent: [title] },
+  ];
+  if (subtitle) innerBlocks.push({ name: 'core/paragraph', attributes: { align: 'center' }, innerContent: [subtitle] });
+  innerBlocks.push({ name: 'core/spacer', attributes: { height: '40px' }, innerContent: [] });
+  innerBlocks.push({ name: 'core/html', attributes: {}, innerContent: [`<table style="width:100%;border-collapse:collapse;"><thead>${headerRow}</thead><tbody>${featureRows}${ctaRow}</tbody></table>`] });
+
+  return { name: 'core/group', attributes: { layout: { type: 'constrained' }, style: { spacing: { padding: { top: '80px', bottom: '80px' } } } }, innerBlocks, innerContent: innerBlocks.map(() => null) };
+}
+
+function createMinimalPricing(config: PricingConfig): BlockNode {
+  const { title, subtitle, plans } = config;
+  
+  const planBlocks: BlockNode[] = plans.map((plan) => ({
+    name: 'core/group',
+    attributes: { style: { spacing: { padding: { top: '24px', bottom: '24px' }, blockGap: '12px' }, border: { bottom: { width: '1px', color: '#e5e7eb' } } } },
+    innerBlocks: [
+      { name: 'core/columns', attributes: { isStackedOnMobile: true, verticalAlignment: 'center' }, innerBlocks: [
+        { name: 'core/column', attributes: { width: '33%' }, innerBlocks: [{ name: 'core/heading', attributes: { level: 3 }, innerContent: [plan.name] }], innerContent: [null] },
+        { name: 'core/column', attributes: { width: '33%' }, innerBlocks: [{ name: 'core/paragraph', attributes: { fontSize: 'x-large', style: { typography: { fontWeight: '600' } } }, innerContent: [plan.price] }], innerContent: [null] },
+        { name: 'core/column', attributes: { width: '33%' }, innerBlocks: [{ name: 'core/buttons', attributes: { layout: { type: 'flex', justifyContent: 'flex-end' } }, innerBlocks: [{ name: 'core/button', attributes: { url: plan.ctaUrl, className: 'is-style-outline' }, innerContent: [plan.ctaText] }], innerContent: [null] }], innerContent: [null] },
+      ], innerContent: [null, null, null] },
+    ],
+    innerContent: [null],
+  }));
+
+  const innerBlocks: BlockNode[] = [{ name: 'core/heading', attributes: { level: 2, textAlign: 'center' }, innerContent: [title] }];
+  if (subtitle) innerBlocks.push({ name: 'core/paragraph', attributes: { align: 'center' }, innerContent: [subtitle] });
+  innerBlocks.push({ name: 'core/spacer', attributes: { height: '40px' }, innerContent: [] });
+  innerBlocks.push(...planBlocks);
+
+  return { name: 'core/group', attributes: { layout: { type: 'constrained' }, style: { spacing: { padding: { top: '80px', bottom: '80px' } } } }, innerBlocks, innerContent: innerBlocks.map(() => null) };
+}
+
+export function createTeamPattern(config: TeamConfig): BlockNode {
+  const layout = config.layout || 'grid';
+  switch (layout) {
+    case 'cards':
+      return createCardsTeam(config);
+    case 'minimal':
+      return createMinimalTeam(config);
+    case 'grid':
+    default:
+      return createGridTeam(config);
+  }
+}
+
+function createGridTeam(config: TeamConfig): BlockNode {
+  const { title, subtitle, members } = config;
+  
+  const memberColumns: BlockNode[] = members.map((member) => ({
+    name: 'core/column',
+    attributes: { style: { spacing: { padding: { top: '20px', bottom: '20px' } } } },
+    innerBlocks: [
+      member.image ? { name: 'core/image', attributes: { url: member.image, alt: member.name, sizeSlug: 'medium', style: { border: { radius: '50%' } }, width: '150px', height: '150px' }, innerContent: [] } : { name: 'core/paragraph', attributes: { align: 'center', fontSize: 'xx-large' }, innerContent: ['👤'] },
+      { name: 'core/heading', attributes: { level: 4, textAlign: 'center' }, innerContent: [member.name] },
+      { name: 'core/paragraph', attributes: { align: 'center', style: { color: { text: 'var(--color-text-muted)' } } }, innerContent: [member.role] },
+    ],
+    innerContent: [null, null, null],
+  }));
+
+  const innerBlocks: BlockNode[] = [{ name: 'core/heading', attributes: { level: 2, textAlign: 'center' }, innerContent: [title] }];
+  if (subtitle) innerBlocks.push({ name: 'core/paragraph', attributes: { align: 'center' }, innerContent: [subtitle] });
+  innerBlocks.push({ name: 'core/spacer', attributes: { height: '40px' }, innerContent: [] });
+  innerBlocks.push({ name: 'core/columns', attributes: { isStackedOnMobile: true }, innerBlocks: memberColumns, innerContent: memberColumns.map(() => null) });
+
+  return { name: 'core/group', attributes: { layout: { type: 'constrained' }, style: { spacing: { padding: { top: '80px', bottom: '80px' } } } }, innerBlocks, innerContent: innerBlocks.map(() => null) };
+}
+
+function createCardsTeam(config: TeamConfig): BlockNode {
+  const { title, subtitle, members } = config;
+  
+  const memberColumns: BlockNode[] = members.map((member) => ({
+    name: 'core/column',
+    attributes: { style: { border: { radius: '12px' }, spacing: { padding: { top: '30px', bottom: '30px', left: '20px', right: '20px' } } }, backgroundColor: 'white' },
+    innerBlocks: [
+      member.image ? { name: 'core/image', attributes: { url: member.image, alt: member.name, sizeSlug: 'medium', style: { border: { radius: '12px' } } }, innerContent: [] } : { name: 'core/paragraph', attributes: { align: 'center', fontSize: 'xx-large' }, innerContent: ['👤'] },
+      { name: 'core/heading', attributes: { level: 4, textAlign: 'center' }, innerContent: [member.name] },
+      { name: 'core/paragraph', attributes: { align: 'center', style: { color: { text: 'var(--color-primary)' } }, fontSize: 'small' }, innerContent: [member.role] },
+      member.bio ? { name: 'core/paragraph', attributes: { align: 'center', fontSize: 'small' }, innerContent: [member.bio] } : null,
+    ].filter(Boolean) as BlockNode[],
+    innerContent: member.bio ? [null, null, null, null] : [null, null, null],
+  }));
+
+  const innerBlocks: BlockNode[] = [{ name: 'core/heading', attributes: { level: 2, textAlign: 'center' }, innerContent: [title] }];
+  if (subtitle) innerBlocks.push({ name: 'core/paragraph', attributes: { align: 'center' }, innerContent: [subtitle] });
+  innerBlocks.push({ name: 'core/spacer', attributes: { height: '40px' }, innerContent: [] });
+  innerBlocks.push({ name: 'core/columns', attributes: { isStackedOnMobile: true }, innerBlocks: memberColumns, innerContent: memberColumns.map(() => null) });
+
+  return { name: 'core/group', attributes: { layout: { type: 'constrained' }, style: { spacing: { padding: { top: '80px', bottom: '80px' } } }, backgroundColor: 'tertiary' }, innerBlocks, innerContent: innerBlocks.map(() => null) };
+}
+
+function createMinimalTeam(config: TeamConfig): BlockNode {
+  const { title, subtitle, members } = config;
+  
+  const memberList = members.map(m => `<div style="margin-bottom:16px;"><strong>${m.name}</strong> — ${m.role}</div>`).join('');
+  const innerBlocks: BlockNode[] = [
+    { name: 'core/heading', attributes: { level: 2, textAlign: 'center' }, innerContent: [title] },
+  ];
+  if (subtitle) innerBlocks.push({ name: 'core/paragraph', attributes: { align: 'center' }, innerContent: [subtitle] });
+  innerBlocks.push({ name: 'core/spacer', attributes: { height: '40px' }, innerContent: [] });
+  innerBlocks.push({ name: 'core/html', attributes: {}, innerContent: [`<div style="max-width:600px;margin:0 auto;text-align:center;">${memberList}</div>`] });
+
+  return { name: 'core/group', attributes: { layout: { type: 'constrained' }, style: { spacing: { padding: { top: '80px', bottom: '80px' } } } }, innerBlocks, innerContent: innerBlocks.map(() => null) };
+}
+
+export function createStatsPattern(config: StatsConfig): BlockNode {
+  const layout = config.layout || 'row';
+  switch (layout) {
+    case 'grid':
+      return createGridStats(config);
+    case 'cards':
+      return createCardsStats(config);
+    case 'row':
+    default:
+      return createRowStats(config);
+  }
+}
+
+function createRowStats(config: StatsConfig): BlockNode {
+  const { title, subtitle, stats } = config;
+  
+  const statColumns: BlockNode[] = stats.map((stat) => ({
+    name: 'core/column',
+    attributes: {},
+    innerBlocks: [
+      { name: 'core/paragraph', attributes: { align: 'center', fontSize: 'xx-large', style: { typography: { fontWeight: '700' } } }, innerContent: [`${stat.prefix || ''}${stat.value}${stat.suffix || ''}`] },
+      { name: 'core/paragraph', attributes: { align: 'center', style: { color: { text: 'var(--color-text-muted)' } } }, innerContent: [stat.label] },
+    ],
+    innerContent: [null, null],
+  }));
+
+  const innerBlocks: BlockNode[] = [];
+  if (title) innerBlocks.push({ name: 'core/heading', attributes: { level: 2, textAlign: 'center' }, innerContent: [title] });
+  if (subtitle) innerBlocks.push({ name: 'core/paragraph', attributes: { align: 'center' }, innerContent: [subtitle] });
+  if (title || subtitle) innerBlocks.push({ name: 'core/spacer', attributes: { height: '40px' }, innerContent: [] });
+  innerBlocks.push({ name: 'core/columns', attributes: { isStackedOnMobile: true }, innerBlocks: statColumns, innerContent: statColumns.map(() => null) });
+
+  return { name: 'core/group', attributes: { layout: { type: 'constrained' }, style: { spacing: { padding: { top: '60px', bottom: '60px' } } }, backgroundColor: 'tertiary' }, innerBlocks, innerContent: innerBlocks.map(() => null) };
+}
+
+function createGridStats(config: StatsConfig): BlockNode {
+  const { title, subtitle, stats } = config;
+  const half = Math.ceil(stats.length / 2);
+  
+  const createStatColumn = (stat: StatItem) => ({
+    name: 'core/column',
+    attributes: { style: { spacing: { padding: '20px' }, border: { width: '1px', color: '#e5e7eb', radius: '8px' } }, backgroundColor: 'white' },
+    innerBlocks: [
+      { name: 'core/paragraph', attributes: { align: 'center', fontSize: 'x-large', style: { typography: { fontWeight: '700' } } }, innerContent: [`${stat.prefix || ''}${stat.value}${stat.suffix || ''}`] },
+      { name: 'core/paragraph', attributes: { align: 'center', fontSize: 'small' }, innerContent: [stat.label] },
+    ],
+    innerContent: [null, null],
+  });
+
+  const innerBlocks: BlockNode[] = [];
+  if (title) innerBlocks.push({ name: 'core/heading', attributes: { level: 2, textAlign: 'center' }, innerContent: [title] });
+  if (subtitle) innerBlocks.push({ name: 'core/paragraph', attributes: { align: 'center' }, innerContent: [subtitle] });
+  innerBlocks.push({ name: 'core/spacer', attributes: { height: '40px' }, innerContent: [] });
+  innerBlocks.push({ name: 'core/columns', attributes: { isStackedOnMobile: true }, innerBlocks: stats.slice(0, half).map(createStatColumn), innerContent: stats.slice(0, half).map(() => null) });
+  if (stats.length > half) {
+    innerBlocks.push({ name: 'core/columns', attributes: { isStackedOnMobile: true }, innerBlocks: stats.slice(half).map(createStatColumn), innerContent: stats.slice(half).map(() => null) });
+  }
+
+  return { name: 'core/group', attributes: { layout: { type: 'constrained' }, style: { spacing: { padding: { top: '60px', bottom: '60px' } } } }, innerBlocks, innerContent: innerBlocks.map(() => null) };
+}
+
+function createCardsStats(config: StatsConfig): BlockNode {
+  const { title, subtitle, stats } = config;
+  
+  const statColumns: BlockNode[] = stats.map((stat) => ({
+    name: 'core/column',
+    attributes: { style: { spacing: { padding: '30px' }, border: { radius: '12px' } }, backgroundColor: 'white' },
+    innerBlocks: [
+      { name: 'core/paragraph', attributes: { align: 'center', fontSize: 'xx-large', style: { typography: { fontWeight: '700' }, color: { text: 'var(--color-primary)' } } }, innerContent: [`${stat.prefix || ''}${stat.value}${stat.suffix || ''}`] },
+      { name: 'core/paragraph', attributes: { align: 'center' }, innerContent: [stat.label] },
+    ],
+    innerContent: [null, null],
+  }));
+
+  const innerBlocks: BlockNode[] = [];
+  if (title) innerBlocks.push({ name: 'core/heading', attributes: { level: 2, textAlign: 'center' }, innerContent: [title] });
+  if (subtitle) innerBlocks.push({ name: 'core/paragraph', attributes: { align: 'center' }, innerContent: [subtitle] });
+  innerBlocks.push({ name: 'core/spacer', attributes: { height: '40px' }, innerContent: [] });
+  innerBlocks.push({ name: 'core/columns', attributes: { isStackedOnMobile: true }, innerBlocks: statColumns, innerContent: statColumns.map(() => null) });
+
+  return { name: 'core/group', attributes: { layout: { type: 'constrained' }, style: { spacing: { padding: { top: '60px', bottom: '60px' } } }, backgroundColor: 'tertiary' }, innerBlocks, innerContent: innerBlocks.map(() => null) };
+}
+
+export function createLogoCloudPattern(config: LogoCloudConfig): BlockNode {
+  const layout = config.layout || 'row';
+  const { title, logos } = config;
+  
+  const logoItems = logos.map((logo) => {
+    const img = `<img src="${logo.imageUrl}" alt="${logo.alt}" style="max-height:48px;width:auto;filter:grayscale(100%);opacity:0.7;transition:all 0.3s;" onmouseover="this.style.filter='none';this.style.opacity='1';" onmouseout="this.style.filter='grayscale(100%)';this.style.opacity='0.7';" />`;
+    return logo.url ? `<a href="${logo.url}" style="display:inline-block;margin:16px 24px;">${img}</a>` : `<span style="display:inline-block;margin:16px 24px;">${img}</span>`;
+  }).join('');
+
+  const innerBlocks: BlockNode[] = [];
+  if (title) innerBlocks.push({ name: 'core/heading', attributes: { level: 6, textAlign: 'center', style: { typography: { textTransform: 'uppercase', letterSpacing: '2px' } } }, innerContent: [title] });
+  innerBlocks.push({ name: 'core/html', attributes: {}, innerContent: [`<div style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;${layout === 'grid' ? 'max-width:800px;margin:0 auto;' : ''}">${logoItems}</div>`] });
+
+  return { name: 'core/group', attributes: { layout: { type: 'constrained' }, style: { spacing: { padding: { top: '40px', bottom: '40px' } } } }, innerBlocks, innerContent: innerBlocks.map(() => null) };
+}
+
+export function createFAQPattern(config: FAQConfig): BlockNode {
+  const layout = config.layout || 'accordion';
+  const { title, subtitle, items } = config;
+  
+  let faqContent: string;
+  if (layout === 'accordion') {
+    faqContent = items.map(item => `<details style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:8px;"><summary style="padding:16px;cursor:pointer;font-weight:600;">${item.question}</summary><div style="padding:0 16px 16px 16px;color:var(--color-text-muted);">${item.answer}</div></details>`).join('');
+  } else {
+    faqContent = items.map(item => `<div style="margin-bottom:32px;"><h4 style="margin-bottom:8px;">${item.question}</h4><p style="color:var(--color-text-muted);margin:0;">${item.answer}</p></div>`).join('');
+  }
+
+  const innerBlocks: BlockNode[] = [
+    { name: 'core/heading', attributes: { level: 2, textAlign: 'center' }, innerContent: [title] },
+  ];
+  if (subtitle) innerBlocks.push({ name: 'core/paragraph', attributes: { align: 'center' }, innerContent: [subtitle] });
+  innerBlocks.push({ name: 'core/spacer', attributes: { height: '40px' }, innerContent: [] });
+  innerBlocks.push({ name: 'core/html', attributes: {}, innerContent: [`<div style="max-width:800px;margin:0 auto;">${faqContent}</div>`] });
+
+  return { name: 'core/group', attributes: { layout: { type: 'constrained' }, style: { spacing: { padding: { top: '80px', bottom: '80px' } } } }, innerBlocks, innerContent: innerBlocks.map(() => null) };
+}
+
+export type SectionType = 'hero' | 'features' | 'cta' | 'testimonials' | 'gallery' | 'contact' | 'footer' | 'pricing' | 'team' | 'stats' | 'logos' | 'faq';
 
 export interface SectionInput {
   type: SectionType;
@@ -1601,6 +1954,21 @@ export function createPatternFromSection(section: SectionInput): BlockNode | nul
 
     case 'footer':
       return createFooterPattern(section.config as unknown as FooterConfig);
+
+    case 'pricing':
+      return createPricingPattern(section.config as unknown as PricingConfig);
+
+    case 'team':
+      return createTeamPattern(section.config as unknown as TeamConfig);
+
+    case 'stats':
+      return createStatsPattern(section.config as unknown as StatsConfig);
+
+    case 'logos':
+      return createLogoCloudPattern(section.config as unknown as LogoCloudConfig);
+
+    case 'faq':
+      return createFAQPattern(section.config as unknown as FAQConfig);
 
     case 'gallery':
     case 'contact':
