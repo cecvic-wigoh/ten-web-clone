@@ -129,7 +129,7 @@ You must respond with valid JSON matching this exact schema:
       "title": "string (page title)",
       "sections": [
         {
-          "type": "hero | features | cta | testimonials | gallery | contact | footer",
+          "type": "hero | features | cta | testimonials | gallery | contact | footer | pricing | team | stats | logos | faq | process | portfolio | blog | newsletter",
           "config": { /* section-specific configuration with LAYOUT */ }
         }
       ]

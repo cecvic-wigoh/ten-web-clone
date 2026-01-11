@@ -22,6 +22,15 @@ export const SectionType = z.enum([
   'gallery',
   'contact',
   'footer',
+  'pricing',
+  'team',
+  'stats',
+  'logos',
+  'faq',
+  'process',
+  'portfolio',
+  'blog',
+  'newsletter',
 ]);
 
 export type SectionType = z.infer<typeof SectionType>;
