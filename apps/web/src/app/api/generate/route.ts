@@ -46,6 +46,17 @@ const GenerationInputSchema = z.object({
       secondary: z.string().optional(),
     })
     .optional(),
+  designDirection: z
+    .enum(['modern-corporate', 'bold-creative', 'elegant-minimal', 'tech-saas', 'organic-lifestyle'])
+    .optional(),
+  siteGoal: z
+    .enum(['lead-generation', 'sell-products', 'portfolio', 'inform-educate', 'community'])
+    .optional(),
+  pageCount: z.number().min(1).max(5).optional(),
+  tagline: z.string().optional(),
+  services: z.array(z.string()).optional(),
+  targetAudience: z.string().optional(),
+  uniqueSellingPoints: z.array(z.string()).optional(),
 });
 
 type GenerationInput = z.infer<typeof GenerationInputSchema>;
