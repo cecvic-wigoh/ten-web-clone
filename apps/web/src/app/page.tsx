@@ -1,15 +1,15 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { PromptInput, type PromptInputData } from '@/components/PromptInput';
+import { type PromptInputData } from '@/components/PromptInput';
+import { SimplePromptInput } from '@/components/SimplePromptInput';
+import { OnboardingFlow } from '@/components/onboarding';
 import { GenerationProgress, type GenerationStep } from '@/components/GenerationProgress';
-import { Preview, type PreviewPage } from '@/components/Preview';
-
-// ============================================================================
-// Types
-// ============================================================================
+import { Preview, type PreviewPage, type VarietyTheme } from '@/components/Preview';
+import { type OnboardingData } from '@/types/onboarding';
 
 type AppState = 'input' | 'generating' | 'preview';
+type InputMode = 'quick' | 'guided';
 
 interface GenerationState {
   currentStep: GenerationStep;
@@ -17,20 +17,24 @@ interface GenerationState {
   error?: string;
 }
 
-// ============================================================================
-// Component
-// ============================================================================
+interface VarietyThemeData {
+  config?: VarietyTheme['config'];
+  css?: string;
+  fontsUrl?: string;
+}
 
 export default function HomePage() {
   const [appState, setAppState] = useState<AppState>('input');
+  const [inputMode, setInputMode] = useState<InputMode>('guided');
   const [generationState, setGenerationState] = useState<GenerationState>({
     currentStep: 'structure',
     message: '',
   });
   const [previewPages, setPreviewPages] = useState<PreviewPage[]>([]);
   const [inputData, setInputData] = useState<PromptInputData | null>(null);
+  const [varietyTheme, setVarietyTheme] = useState<VarietyThemeData | null>(null);
 
-  const handleSubmit = useCallback(async (data: PromptInputData) => {
+  const handleSubmit = useCallback(async (data: PromptInputData | OnboardingData) => {
     setInputData(data);
     setAppState('generating');
     setGenerationState({ currentStep: 'structure', message: 'Starting generation...' });
@@ -78,11 +82,17 @@ export default function HomePage() {
 
               case 'preview':
                 setPreviewPages(event.blocks);
+                if (event.varietyTheme) {
+                  setVarietyTheme(event.varietyTheme);
+                }
                 setAppState('preview');
                 break;
 
               case 'complete':
                 setPreviewPages(event.result?.pages || []);
+                if (event.result?.varietyTheme) {
+                  setVarietyTheme(event.result.varietyTheme);
+                }
                 setAppState('preview');
                 break;
 
@@ -121,6 +131,7 @@ export default function HomePage() {
         body: JSON.stringify({
           pages: previewPages,
           businessName: inputData.businessName,
+          varietyTheme: varietyTheme,
         }),
       });
 
@@ -156,6 +167,7 @@ export default function HomePage() {
     setAppState('input');
     setPreviewPages([]);
     setInputData(null);
+    setVarietyTheme(null);
     setGenerationState({ currentStep: 'structure', message: '' });
   }, []);
 
@@ -167,19 +179,51 @@ export default function HomePage() {
   return (
     <div className="space-y-8">
       {appState === 'input' && (
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Create Your Website
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Create your website with AI
             </h2>
-            <p className="text-gray-600">
-              Describe your business and let AI generate a professional WordPress
-              website for you.
+            <p className="text-xl text-gray-600">
+              {inputMode === 'guided' ? 'Answer a few questions to get started' : 'Just describe what you need'}
             </p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <PromptInput onSubmit={handleSubmit} showColorPreferences />
+          <div className="flex justify-center mb-6">
+            <div className="inline-flex rounded-lg border border-gray-200 p-1 bg-gray-50">
+              <button
+                onClick={() => setInputMode('quick')}
+                className={`
+                  px-4 py-2 rounded-md text-sm font-medium transition-all
+                  ${inputMode === 'quick'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                  }
+                `}
+              >
+                Quick Mode
+              </button>
+              <button
+                onClick={() => setInputMode('guided')}
+                className={`
+                  px-4 py-2 rounded-md text-sm font-medium transition-all
+                  ${inputMode === 'guided'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                  }
+                `}
+              >
+                Guided Mode
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-xl p-8 md:p-10">
+            {inputMode === 'quick' ? (
+              <SimplePromptInput onSubmit={handleSubmit} />
+            ) : (
+              <OnboardingFlow onSubmit={handleSubmit} />
+            )}
           </div>
         </div>
       )}
@@ -224,7 +268,11 @@ export default function HomePage() {
             </button>
           </div>
           <div className="bg-white rounded-xl shadow-lg overflow-hidden h-[700px]">
-            <Preview pages={previewPages} onDeploy={handleDeploy} />
+            <Preview
+              pages={previewPages}
+              onDeploy={handleDeploy}
+              varietyTheme={varietyTheme || undefined}
+            />
           </div>
         </div>
       )}

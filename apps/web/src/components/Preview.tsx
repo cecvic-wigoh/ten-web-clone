@@ -12,10 +12,39 @@ export interface PreviewPage {
   blocks: string;
 }
 
+export interface VarietyTheme {
+  config?: {
+    colors: {
+      primary: string;
+      secondary: string;
+      accent: string;
+      text: string;
+      textMuted: string;
+      background: string;
+      surface: string;
+    };
+    typography: {
+      headingFont: string;
+      bodyFont: string;
+      headingWeight: string;
+      bodyWeight: string;
+    };
+    style: {
+      borderRadius: string;
+      shadowStyle: string;
+      buttonStyle: string;
+    };
+    industry: string;
+  };
+  css?: string;
+  fontsUrl?: string;
+}
+
 export interface PreviewProps {
   pages: PreviewPage[];
   loading?: boolean;
   onDeploy?: () => void;
+  varietyTheme?: VarietyTheme;
 }
 
 type ViewportMode = 'desktop' | 'tablet' | 'mobile';
@@ -91,9 +120,17 @@ function blocksToHtml(blocks: string): string {
 }
 
 /**
- * Generate full HTML document for iframe
+ * Generate full HTML document for iframe with theme CSS
  */
-function generatePreviewDocument(html: string): string {
+function generatePreviewDocument(html: string, theme?: VarietyTheme): string {
+  const fontsLink = theme?.fontsUrl
+    ? `<link rel="preconnect" href="https://fonts.googleapis.com">
+       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+       <link href="${theme.fontsUrl}" rel="stylesheet">`
+    : '';
+
+  const themeCss = theme?.css || '';
+
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -101,12 +138,170 @@ function generatePreviewDocument(html: string): string {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Preview</title>
+  ${fontsLink}
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
+    ${themeCss}
+
+    /* Base styles */
     body {
-      font-family: system-ui, -apple-system, sans-serif;
       margin: 0;
       padding: 0;
+      line-height: 1.6;
+    }
+
+    /* Section spacing */
+    .wp-block-group {
+      padding: 60px 20px;
+    }
+
+    /* Constrained layout */
+    .wp-block-group > * {
+      max-width: 1200px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* Cover block (Hero) */
+    .wp-block-cover {
+      position: relative;
+      min-height: 500px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-size: cover;
+      background-position: center;
+      padding: 60px 20px;
+    }
+
+    .wp-block-cover::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.6));
+    }
+
+    .wp-block-cover > * {
+      position: relative;
+      z-index: 1;
+      max-width: 800px;
+      text-align: center;
+    }
+
+    .wp-block-cover h1,
+    .wp-block-cover h2 {
+      color: white !important;
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .wp-block-cover p {
+      color: white !important;
+      font-size: 1.25rem;
+      opacity: 0.95;
+      margin-bottom: 2rem;
+    }
+
+    /* Columns */
+    .wp-block-columns {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 30px;
+      margin: 40px auto;
+    }
+
+    .wp-block-column {
+      padding: 30px;
+      text-align: center;
+    }
+
+    /* Headings */
+    h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+    h2 { font-size: 2rem; margin-bottom: 1rem; }
+    h3 { font-size: 1.5rem; margin-bottom: 0.75rem; }
+    h4 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+
+    /* Paragraphs */
+    p {
+      margin-bottom: 1rem;
+      line-height: 1.7;
+    }
+
+    /* Buttons container */
+    .wp-block-buttons {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 1.5rem;
+    }
+
+    .wp-block-buttons.is-content-justification-center {
+      justify-content: center;
+    }
+
+    /* Button styling */
+    .wp-block-button {
+      display: inline-block;
+    }
+
+    .wp-block-button__link {
+      display: inline-block;
+      padding: 12px 28px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    /* Spacer */
+    .wp-block-spacer {
+      display: block;
+    }
+
+    /* Separator */
+    .wp-block-separator {
+      border: none;
+      border-top: 1px solid #e5e7eb;
+      margin: 40px auto;
+      max-width: 100px;
+    }
+
+    /* Quote */
+    .wp-block-quote {
+      border-left: 4px solid var(--color-primary, #3b82f6);
+      padding-left: 20px;
+      margin: 20px 0;
+      font-style: italic;
+    }
+
+    /* List */
+    .wp-block-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .wp-block-list li {
+      padding: 8px 0;
+    }
+
+    /* Feature icons */
+    .feature-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .wp-block-cover h1 {
+        font-size: 2rem;
+      }
+      .wp-block-columns {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -123,7 +318,7 @@ function generatePreviewDocument(html: string): string {
 // Component
 // ============================================================================
 
-export function Preview({ pages, loading = false, onDeploy }: PreviewProps) {
+export function Preview({ pages, loading = false, onDeploy, varietyTheme }: PreviewProps) {
   const [activeTab, setActiveTab] = useState(0);
   const [viewport, setViewport] = useState<ViewportMode>('desktop');
 
@@ -138,7 +333,7 @@ export function Preview({ pages, loading = false, onDeploy }: PreviewProps) {
 
   const activePage = pages[activeTab];
   const previewHtml = blocksToHtml(activePage.blocks);
-  const previewDocument = generatePreviewDocument(previewHtml);
+  const previewDocument = generatePreviewDocument(previewHtml, varietyTheme);
 
   return (
     <div className="flex flex-col h-full">
