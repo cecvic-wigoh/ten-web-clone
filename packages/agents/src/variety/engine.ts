@@ -68,6 +68,23 @@ export interface ThemeGenerationInput {
     primary?: string;
     secondary?: string;
   };
+  designDirection?: DesignDirection;
+}
+
+export type DesignDirection =
+  | 'modern-corporate'
+  | 'bold-creative'
+  | 'elegant-minimal'
+  | 'tech-saas'
+  | 'organic-lifestyle';
+
+export interface DesignDirectionPreset {
+  colorTendency: 'warm' | 'cool' | 'neutral';
+  saturation: 'muted' | 'balanced' | 'vibrant';
+  typography: 'serif' | 'sans-serif' | 'mixed';
+  borderRadius: ThemeStyle['borderRadius'];
+  shadowStyle: ThemeStyle['shadowStyle'];
+  spacing: 'compact' | 'normal' | 'spacious';
 }
 
 export interface IndustryPresetStyle {
@@ -777,6 +794,51 @@ function varyColor(hex: string, random: () => number, maxHueShift = 15, maxSatSh
   return hslToHex(newH, newS, newL);
 }
 
+const DESIGN_DIRECTION_PRESETS: Record<DesignDirection, DesignDirectionPreset> = {
+  'modern-corporate': {
+    colorTendency: 'cool',
+    saturation: 'muted',
+    typography: 'sans-serif',
+    borderRadius: 'sm',
+    shadowStyle: 'subtle',
+    spacing: 'normal',
+  },
+  'bold-creative': {
+    colorTendency: 'warm',
+    saturation: 'vibrant',
+    typography: 'mixed',
+    borderRadius: 'lg',
+    shadowStyle: 'dramatic',
+    spacing: 'spacious',
+  },
+  'elegant-minimal': {
+    colorTendency: 'neutral',
+    saturation: 'muted',
+    typography: 'serif',
+    borderRadius: 'none',
+    shadowStyle: 'none',
+    spacing: 'spacious',
+  },
+  'tech-saas': {
+    colorTendency: 'cool',
+    saturation: 'balanced',
+    typography: 'sans-serif',
+    borderRadius: 'md',
+    shadowStyle: 'medium',
+    spacing: 'normal',
+  },
+  'organic-lifestyle': {
+    colorTendency: 'warm',
+    saturation: 'balanced',
+    typography: 'serif',
+    borderRadius: 'full',
+    shadowStyle: 'subtle',
+    spacing: 'spacious',
+  },
+};
+
+export { DESIGN_DIRECTION_PRESETS };
+
 // ============================================================================
 // Main Functions
 // ============================================================================
@@ -852,45 +914,50 @@ export function getIndustryPreset(industry: IndustryType): IndustryPreset {
 export function generateTheme(input: ThemeGenerationInput): ThemeConfig {
   const industry = detectIndustry(input.businessDescription);
   const preset = getIndustryPreset(industry);
+  const directionPreset = input.designDirection 
+    ? DESIGN_DIRECTION_PRESETS[input.designDirection] 
+    : null;
 
-  // Create seeded random generator
   const seed = input.seed ?? Math.floor(Math.random() * 1000000);
   const random = seededRandom(seed);
 
-  // Apply variations to colors
   const variedColors: ThemeColors = {
     primary: input.colorPreferences?.primary ?? varyColor(preset.colors.primary, random),
     secondary: input.colorPreferences?.secondary ?? varyColor(preset.colors.secondary, random),
     accent: varyColor(preset.colors.accent, random),
-    text: preset.colors.text, // Keep text colors stable
+    text: preset.colors.text,
     textMuted: preset.colors.textMuted,
     background: preset.colors.background,
     surface: preset.colors.surface,
   };
 
-  // Optionally vary typography selection
   const typographyOptions: ThemeTypography[] = [
     preset.typography,
-    // Alternative fonts for variety
     ...(TYPOGRAPHY_ALTERNATIVES[industry] || []),
   ];
 
   const typographyIndex = Math.floor(random() * typographyOptions.length);
   const selectedTypography = typographyOptions[typographyIndex];
 
-  // Optionally vary style settings
-  const styleOptions: ThemeStyle[] = [
-    {
-      borderRadius: preset.style.borderRadius,
-      shadowStyle: preset.style.shadowStyle,
+  let selectedStyle: ThemeStyle;
+  if (directionPreset) {
+    selectedStyle = {
+      borderRadius: directionPreset.borderRadius,
+      shadowStyle: directionPreset.shadowStyle,
       buttonStyle: preset.style.buttonStyle,
-    },
-    // Alternative styles for variety
-    ...(STYLE_ALTERNATIVES[industry] || []),
-  ];
-
-  const styleIndex = Math.floor(random() * styleOptions.length);
-  const selectedStyle = styleOptions[styleIndex];
+    };
+  } else {
+    const styleOptions: ThemeStyle[] = [
+      {
+        borderRadius: preset.style.borderRadius,
+        shadowStyle: preset.style.shadowStyle,
+        buttonStyle: preset.style.buttonStyle,
+      },
+      ...(STYLE_ALTERNATIVES[industry] || []),
+    ];
+    const styleIndex = Math.floor(random() * styleOptions.length);
+    selectedStyle = styleOptions[styleIndex];
+  }
 
   return {
     colors: variedColors,

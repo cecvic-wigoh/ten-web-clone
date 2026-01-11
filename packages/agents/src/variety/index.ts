@@ -10,6 +10,7 @@ export {
   generateTheme,
   detectIndustry,
   getIndustryPreset,
+  DESIGN_DIRECTION_PRESETS,
   type ThemeConfig,
   type ThemeColors,
   type ThemeTypography,
@@ -18,6 +19,8 @@ export {
   type IndustryType,
   type IndustryPreset,
   type IndustryPresetStyle,
+  type DesignDirection,
+  type DesignDirectionPreset,
 } from './engine';
 
 // Template exports
