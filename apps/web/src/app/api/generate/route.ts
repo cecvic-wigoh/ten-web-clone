@@ -487,9 +487,29 @@ async function* generateWithAgents(input: GenerationInput) {
   // Step 1: Generate site structure
   yield { type: 'progress', step: 'structure', message: 'Creating site structure with AI...' };
 
+  // Build enhanced business description with optional fields
+  let enhancedDescription = `${input.businessName}: ${input.businessDescription}`;
+  
+  if (input.tagline) {
+    enhancedDescription += `. Tagline: ${input.tagline}`;
+  }
+  
+  if (input.services && input.services.length > 0) {
+    enhancedDescription += `. Services: ${input.services.join(', ')}`;
+  }
+  
+  if (input.targetAudience) {
+    enhancedDescription += `. Target audience: ${input.targetAudience}`;
+  }
+  
+  if (input.uniqueSellingPoints && input.uniqueSellingPoints.length > 0) {
+    enhancedDescription += `. Unique selling points: ${input.uniqueSellingPoints.join(', ')}`;
+  }
+
   const structureResult = await structureAgent.generate({
-    businessDescription: `${input.businessName}: ${input.businessDescription}`,
+    businessDescription: enhancedDescription,
     businessType: input.industry,
+    siteGoal: input.siteGoal,
     maxTokens: 8192, // Allow more tokens for complete output
   });
 
@@ -509,6 +529,7 @@ async function* generateWithAgents(input: GenerationInput) {
     businessName: input.businessName,
     seed: Date.now(), // Use timestamp for variety
     colorPreferences: input.colorPreferences,
+    designDirection: input.designDirection,
   });
 
   const themeCss = generateThemeCss(varietyTheme);
