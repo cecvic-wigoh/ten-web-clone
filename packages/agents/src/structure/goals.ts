@@ -38,9 +38,6 @@ export type SiteGoal =
  * implemented in Phase 5. Using available alternatives for now.
  */
 export const GOAL_SECTION_MAP: Record<SiteGoal, string[]> = {
-  /**
-   * Lead Generation - Focus on capturing leads through forms and CTAs
-   */
   'lead-generation': [
     'hero',
     'features',
@@ -51,9 +48,6 @@ export const GOAL_SECTION_MAP: Record<SiteGoal, string[]> = {
     'footer',
   ],
 
-  /**
-   * Sell Products - E-commerce focus with pricing and social proof
-   */
   'sell-products': [
     'hero',
     'features',
@@ -64,41 +58,32 @@ export const GOAL_SECTION_MAP: Record<SiteGoal, string[]> = {
     'footer',
   ],
 
-  /**
-   * Portfolio - Showcase work and expertise
-   */
   portfolio: [
     'hero',
-    'gallery', // portfolio placeholder until Phase 5
+    'portfolio',
     'team',
-    'features', // process placeholder until Phase 5
+    'process',
     'testimonials',
     'contact',
     'footer',
   ],
 
-  /**
-   * Inform & Educate - Content-focused with resources
-   */
   'inform-educate': [
     'hero',
     'features',
     'stats',
-    'gallery', // blog placeholder until Phase 5
+    'blog',
     'faq',
-    'contact', // newsletter placeholder until Phase 5
+    'newsletter',
     'footer',
   ],
 
-  /**
-   * Community - Build community and engagement
-   */
   community: [
     'hero',
     'team',
     'logos',
     'testimonials',
-    'contact', // newsletter placeholder until Phase 5
+    'newsletter',
     'footer',
   ],
 };
