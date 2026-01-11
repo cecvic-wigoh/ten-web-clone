@@ -176,6 +176,82 @@ export interface FAQConfig {
   items: FAQItem[];
 }
 
+export type ProcessLayout = 'timeline' | 'steps';
+export type PortfolioLayout = 'grid' | 'cards';
+export type BlogPreviewLayout = 'grid' | 'list';
+export type NewsletterLayout = 'inline' | 'centered';
+export type ContactLayout = 'split' | 'centered';
+
+export interface ProcessStep {
+  number?: number;
+  title: string;
+  description: string;
+  icon?: string;
+}
+
+export interface ProcessConfig {
+  layout?: ProcessLayout;
+  title: string;
+  subtitle?: string;
+  steps: ProcessStep[];
+}
+
+export interface PortfolioItem {
+  title: string;
+  category?: string;
+  imageUrl: string;
+  url?: string;
+}
+
+export interface PortfolioConfig {
+  layout?: PortfolioLayout;
+  title: string;
+  subtitle?: string;
+  items: PortfolioItem[];
+}
+
+export interface BlogPost {
+  title: string;
+  excerpt: string;
+  imageUrl?: string;
+  date?: string;
+  url?: string;
+  author?: string;
+}
+
+export interface BlogPreviewConfig {
+  layout?: BlogPreviewLayout;
+  title: string;
+  subtitle?: string;
+  posts: BlogPost[];
+}
+
+export interface NewsletterConfig {
+  layout?: NewsletterLayout;
+  title: string;
+  description?: string;
+  buttonText?: string;
+  placeholderText?: string;
+}
+
+export interface ContactFormField {
+  label: string;
+  type: 'text' | 'email' | 'textarea';
+  placeholder?: string;
+  required?: boolean;
+}
+
+export interface ContactConfig {
+  layout?: ContactLayout;
+  title: string;
+  description?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  formFields?: ContactFormField[];
+  mapPlaceholder?: string;
+}
+
 // ============================================================================
 // Hero Pattern - Multiple Layout Variants
 // ============================================================================
@@ -1927,7 +2003,320 @@ export function createFAQPattern(config: FAQConfig): BlockNode {
   return { name: 'core/group', attributes: { layout: { type: 'constrained' }, style: { spacing: { padding: { top: '80px', bottom: '80px' } } } }, innerBlocks, innerContent: innerBlocks.map(() => null) };
 }
 
-export type SectionType = 'hero' | 'features' | 'cta' | 'testimonials' | 'gallery' | 'contact' | 'footer' | 'pricing' | 'team' | 'stats' | 'logos' | 'faq';
+export function createProcessPattern(config: ProcessConfig): BlockNode {
+  const layout = config.layout || 'timeline';
+  switch (layout) {
+    case 'steps':
+      return createStepsProcess(config);
+    case 'timeline':
+    default:
+      return createTimelineProcess(config);
+  }
+}
+
+function createTimelineProcess(config: ProcessConfig): BlockNode {
+  const { title, subtitle, steps } = config;
+  
+  const timelineItems = steps.map((step, index) => `
+    <div style="display:flex;gap:24px;margin-bottom:32px;">
+      <div style="flex-shrink:0;width:40px;height:40px;border-radius:50%;background:var(--color-primary);color:white;display:flex;align-items:center;justify-content:center;font-weight:600;">${step.number || index + 1}</div>
+      <div style="flex:1;padding-top:8px;border-left:2px solid #e5e7eb;padding-left:24px;margin-left:-33px;">
+        <h4 style="margin:0 0 8px 0;font-weight:600;">${step.title}</h4>
+        <p style="margin:0;color:var(--color-text-muted);">${step.description}</p>
+      </div>
+    </div>
+  `).join('');
+
+  const innerBlocks: BlockNode[] = [
+    { name: 'core/heading', attributes: { level: 2, textAlign: 'center' }, innerContent: [title] },
+  ];
+  if (subtitle) innerBlocks.push({ name: 'core/paragraph', attributes: { align: 'center' }, innerContent: [subtitle] });
+  innerBlocks.push({ name: 'core/spacer', attributes: { height: '40px' }, innerContent: [] });
+  innerBlocks.push({ name: 'core/html', attributes: {}, innerContent: [`<div style="max-width:600px;margin:0 auto;">${timelineItems}</div>`] });
+
+  return { name: 'core/group', attributes: { layout: { type: 'constrained' }, style: { spacing: { padding: { top: '80px', bottom: '80px' } } } }, innerBlocks, innerContent: innerBlocks.map(() => null) };
+}
+
+function createStepsProcess(config: ProcessConfig): BlockNode {
+  const { title, subtitle, steps } = config;
+  
+  const stepColumns: BlockNode[] = steps.map((step, index) => ({
+    name: 'core/column',
+    attributes: { style: { spacing: { padding: '20px' } } },
+    innerBlocks: [
+      { name: 'core/paragraph', attributes: { align: 'center', fontSize: 'xx-large', style: { typography: { fontWeight: '700' }, color: { text: 'var(--color-primary)' } } }, innerContent: [`${step.number || index + 1}`] },
+      { name: 'core/heading', attributes: { level: 4, textAlign: 'center' }, innerContent: [step.title] },
+      { name: 'core/paragraph', attributes: { align: 'center', fontSize: 'small' }, innerContent: [step.description] },
+    ],
+    innerContent: [null, null, null],
+  }));
+
+  const innerBlocks: BlockNode[] = [
+    { name: 'core/heading', attributes: { level: 2, textAlign: 'center' }, innerContent: [title] },
+  ];
+  if (subtitle) innerBlocks.push({ name: 'core/paragraph', attributes: { align: 'center' }, innerContent: [subtitle] });
+  innerBlocks.push({ name: 'core/spacer', attributes: { height: '40px' }, innerContent: [] });
+  innerBlocks.push({ name: 'core/columns', attributes: { isStackedOnMobile: true }, innerBlocks: stepColumns, innerContent: stepColumns.map(() => null) });
+
+  return { name: 'core/group', attributes: { layout: { type: 'constrained' }, style: { spacing: { padding: { top: '80px', bottom: '80px' } } } }, innerBlocks, innerContent: innerBlocks.map(() => null) };
+}
+
+export function createPortfolioPattern(config: PortfolioConfig): BlockNode {
+  const layout = config.layout || 'grid';
+  switch (layout) {
+    case 'cards':
+      return createCardsPortfolio(config);
+    case 'grid':
+    default:
+      return createGridPortfolio(config);
+  }
+}
+
+function createGridPortfolio(config: PortfolioConfig): BlockNode {
+  const { title, subtitle, items } = config;
+  
+  const gridItems = items.map(item => `
+    <div style="position:relative;overflow:hidden;border-radius:8px;">
+      <img src="${item.imageUrl}" alt="${item.title}" style="width:100%;height:250px;object-fit:cover;transition:transform 0.3s;" />
+      <div style="position:absolute;inset:0;background:linear-gradient(transparent,rgba(0,0,0,0.7));opacity:0;transition:opacity 0.3s;display:flex;flex-direction:column;justify-content:flex-end;padding:16px;">
+        <h4 style="color:white;margin:0;">${item.title}</h4>
+        ${item.category ? `<p style="color:rgba(255,255,255,0.8);margin:4px 0 0;font-size:14px;">${item.category}</p>` : ''}
+      </div>
+    </div>
+  `).join('');
+
+  const innerBlocks: BlockNode[] = [
+    { name: 'core/heading', attributes: { level: 2, textAlign: 'center' }, innerContent: [title] },
+  ];
+  if (subtitle) innerBlocks.push({ name: 'core/paragraph', attributes: { align: 'center' }, innerContent: [subtitle] });
+  innerBlocks.push({ name: 'core/spacer', attributes: { height: '40px' }, innerContent: [] });
+  innerBlocks.push({ name: 'core/html', attributes: {}, innerContent: [`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px;">${gridItems}</div>`] });
+
+  return { name: 'core/group', attributes: { layout: { type: 'constrained' }, style: { spacing: { padding: { top: '80px', bottom: '80px' } } } }, innerBlocks, innerContent: innerBlocks.map(() => null) };
+}
+
+function createCardsPortfolio(config: PortfolioConfig): BlockNode {
+  const { title, subtitle, items } = config;
+  
+  const cardColumns: BlockNode[] = items.slice(0, 3).map(item => ({
+    name: 'core/column',
+    attributes: { style: { border: { radius: '12px' }, spacing: { padding: '0' } }, backgroundColor: 'white' },
+    innerBlocks: [
+      { name: 'core/image', attributes: { url: item.imageUrl, alt: item.title, sizeSlug: 'large', style: { border: { radius: '12px 12px 0 0' } } }, innerContent: [] },
+      { name: 'core/group', attributes: { style: { spacing: { padding: '20px' } } }, innerBlocks: [
+        { name: 'core/heading', attributes: { level: 4 }, innerContent: [item.title] },
+        item.category ? { name: 'core/paragraph', attributes: { style: { color: { text: 'var(--color-primary)' } }, fontSize: 'small' }, innerContent: [item.category] } : null,
+      ].filter(Boolean) as BlockNode[], innerContent: item.category ? [null, null] : [null] },
+    ],
+    innerContent: [null, null],
+  }));
+
+  const innerBlocks: BlockNode[] = [
+    { name: 'core/heading', attributes: { level: 2, textAlign: 'center' }, innerContent: [title] },
+  ];
+  if (subtitle) innerBlocks.push({ name: 'core/paragraph', attributes: { align: 'center' }, innerContent: [subtitle] });
+  innerBlocks.push({ name: 'core/spacer', attributes: { height: '40px' }, innerContent: [] });
+  innerBlocks.push({ name: 'core/columns', attributes: { isStackedOnMobile: true }, innerBlocks: cardColumns, innerContent: cardColumns.map(() => null) });
+
+  return { name: 'core/group', attributes: { layout: { type: 'constrained' }, style: { spacing: { padding: { top: '80px', bottom: '80px' } } }, backgroundColor: 'tertiary' }, innerBlocks, innerContent: innerBlocks.map(() => null) };
+}
+
+export function createBlogPreviewPattern(config: BlogPreviewConfig): BlockNode {
+  const layout = config.layout || 'grid';
+  switch (layout) {
+    case 'list':
+      return createListBlogPreview(config);
+    case 'grid':
+    default:
+      return createGridBlogPreview(config);
+  }
+}
+
+function createGridBlogPreview(config: BlogPreviewConfig): BlockNode {
+  const { title, subtitle, posts } = config;
+  
+  const postColumns: BlockNode[] = posts.slice(0, 3).map(post => ({
+    name: 'core/column',
+    attributes: { style: { border: { radius: '12px' }, spacing: { padding: '0' } }, backgroundColor: 'white' },
+    innerBlocks: [
+      post.imageUrl ? { name: 'core/image', attributes: { url: post.imageUrl, alt: post.title, sizeSlug: 'large', style: { border: { radius: '12px 12px 0 0' } } }, innerContent: [] } : null,
+      { name: 'core/group', attributes: { style: { spacing: { padding: '20px', blockGap: '8px' } } }, innerBlocks: [
+        post.date ? { name: 'core/paragraph', attributes: { fontSize: 'small', style: { color: { text: 'var(--color-text-muted)' } } }, innerContent: [post.date] } : null,
+        { name: 'core/heading', attributes: { level: 4 }, innerContent: [post.title] },
+        { name: 'core/paragraph', attributes: { fontSize: 'small' }, innerContent: [post.excerpt] },
+        post.url ? { name: 'core/paragraph', attributes: { fontSize: 'small' }, innerContent: [`<a href="${post.url}" style="color:var(--color-primary);text-decoration:none;">Read more →</a>`] } : null,
+      ].filter(Boolean) as BlockNode[], innerContent: [null, null, null, null].filter((_, i) => i < [post.date, true, true, post.url].filter(Boolean).length) },
+    ].filter(Boolean) as BlockNode[],
+    innerContent: post.imageUrl ? [null, null] : [null],
+  }));
+
+  const innerBlocks: BlockNode[] = [
+    { name: 'core/heading', attributes: { level: 2, textAlign: 'center' }, innerContent: [title] },
+  ];
+  if (subtitle) innerBlocks.push({ name: 'core/paragraph', attributes: { align: 'center' }, innerContent: [subtitle] });
+  innerBlocks.push({ name: 'core/spacer', attributes: { height: '40px' }, innerContent: [] });
+  innerBlocks.push({ name: 'core/columns', attributes: { isStackedOnMobile: true }, innerBlocks: postColumns, innerContent: postColumns.map(() => null) });
+
+  return { name: 'core/group', attributes: { layout: { type: 'constrained' }, style: { spacing: { padding: { top: '80px', bottom: '80px' } } } }, innerBlocks, innerContent: innerBlocks.map(() => null) };
+}
+
+function createListBlogPreview(config: BlogPreviewConfig): BlockNode {
+  const { title, subtitle, posts } = config;
+  
+  const postItems = posts.map(post => `
+    <article style="display:flex;gap:24px;padding:24px 0;border-bottom:1px solid #e5e7eb;">
+      ${post.imageUrl ? `<img src="${post.imageUrl}" alt="${post.title}" style="width:200px;height:150px;object-fit:cover;border-radius:8px;flex-shrink:0;" />` : ''}
+      <div style="flex:1;">
+        ${post.date ? `<p style="margin:0 0 8px;font-size:14px;color:var(--color-text-muted);">${post.date}${post.author ? ` · ${post.author}` : ''}</p>` : ''}
+        <h4 style="margin:0 0 8px;">${post.title}</h4>
+        <p style="margin:0 0 12px;color:var(--color-text-muted);">${post.excerpt}</p>
+        ${post.url ? `<a href="${post.url}" style="color:var(--color-primary);text-decoration:none;font-weight:500;">Read more →</a>` : ''}
+      </div>
+    </article>
+  `).join('');
+
+  const innerBlocks: BlockNode[] = [
+    { name: 'core/heading', attributes: { level: 2, textAlign: 'center' }, innerContent: [title] },
+  ];
+  if (subtitle) innerBlocks.push({ name: 'core/paragraph', attributes: { align: 'center' }, innerContent: [subtitle] });
+  innerBlocks.push({ name: 'core/spacer', attributes: { height: '40px' }, innerContent: [] });
+  innerBlocks.push({ name: 'core/html', attributes: {}, innerContent: [`<div style="max-width:800px;margin:0 auto;">${postItems}</div>`] });
+
+  return { name: 'core/group', attributes: { layout: { type: 'constrained' }, style: { spacing: { padding: { top: '80px', bottom: '80px' } } } }, innerBlocks, innerContent: innerBlocks.map(() => null) };
+}
+
+export function createNewsletterPattern(config: NewsletterConfig): BlockNode {
+  const layout = config.layout || 'centered';
+  switch (layout) {
+    case 'inline':
+      return createInlineNewsletter(config);
+    case 'centered':
+    default:
+      return createCenteredNewsletter(config);
+  }
+}
+
+function createCenteredNewsletter(config: NewsletterConfig): BlockNode {
+  const { title, description, buttonText = 'Subscribe', placeholderText = 'Enter your email' } = config;
+  
+  const formHtml = `
+    <form style="display:flex;gap:8px;max-width:400px;margin:0 auto;">
+      <input type="email" placeholder="${placeholderText}" style="flex:1;padding:12px 16px;border:1px solid #e5e7eb;border-radius:8px;font-size:16px;" />
+      <button type="submit" style="padding:12px 24px;background:var(--color-primary);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:500;">${buttonText}</button>
+    </form>
+  `;
+
+  const innerBlocks: BlockNode[] = [
+    { name: 'core/heading', attributes: { level: 2, textAlign: 'center' }, innerContent: [title] },
+  ];
+  if (description) innerBlocks.push({ name: 'core/paragraph', attributes: { align: 'center' }, innerContent: [description] });
+  innerBlocks.push({ name: 'core/spacer', attributes: { height: '24px' }, innerContent: [] });
+  innerBlocks.push({ name: 'core/html', attributes: {}, innerContent: [formHtml] });
+
+  return { name: 'core/group', attributes: { layout: { type: 'constrained' }, style: { spacing: { padding: { top: '60px', bottom: '60px' } } }, backgroundColor: 'tertiary' }, innerBlocks, innerContent: innerBlocks.map(() => null) };
+}
+
+function createInlineNewsletter(config: NewsletterConfig): BlockNode {
+  const { title, description, buttonText = 'Subscribe', placeholderText = 'Enter your email' } = config;
+  
+  const formHtml = `
+    <form style="display:flex;gap:8px;">
+      <input type="email" placeholder="${placeholderText}" style="flex:1;padding:12px 16px;border:1px solid #e5e7eb;border-radius:8px;font-size:16px;" />
+      <button type="submit" style="padding:12px 24px;background:var(--color-primary);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:500;">${buttonText}</button>
+    </form>
+  `;
+
+  const innerBlocks: BlockNode[] = [
+    { name: 'core/columns', attributes: { verticalAlignment: 'center', isStackedOnMobile: true }, innerBlocks: [
+      { name: 'core/column', attributes: { width: '50%' }, innerBlocks: [
+        { name: 'core/heading', attributes: { level: 3 }, innerContent: [title] },
+        description ? { name: 'core/paragraph', attributes: {}, innerContent: [description] } : null,
+      ].filter(Boolean) as BlockNode[], innerContent: description ? [null, null] : [null] },
+      { name: 'core/column', attributes: { width: '50%' }, innerBlocks: [
+        { name: 'core/html', attributes: {}, innerContent: [formHtml] },
+      ], innerContent: [null] },
+    ], innerContent: [null, null] },
+  ];
+
+  return { name: 'core/group', attributes: { layout: { type: 'constrained' }, style: { spacing: { padding: { top: '60px', bottom: '60px' } } }, backgroundColor: 'tertiary' }, innerBlocks, innerContent: innerBlocks.map(() => null) };
+}
+
+export function createContactPattern(config: ContactConfig): BlockNode {
+  const layout = config.layout || 'split';
+  switch (layout) {
+    case 'centered':
+      return createCenteredContact(config);
+    case 'split':
+    default:
+      return createSplitContact(config);
+  }
+}
+
+function createSplitContact(config: ContactConfig): BlockNode {
+  const { title, description, email, phone, address } = config;
+  
+  let contactInfo = '';
+  if (email) contactInfo += `<p style="margin:0 0 12px;display:flex;align-items:center;gap:8px;">📧 ${email}</p>`;
+  if (phone) contactInfo += `<p style="margin:0 0 12px;display:flex;align-items:center;gap:8px;">📞 ${phone}</p>`;
+  if (address) contactInfo += `<p style="margin:0 0 12px;display:flex;align-items:center;gap:8px;">📍 ${address}</p>`;
+
+  const formHtml = `
+    <form style="display:flex;flex-direction:column;gap:16px;">
+      <input type="text" placeholder="Your name" style="padding:12px 16px;border:1px solid #e5e7eb;border-radius:8px;font-size:16px;" />
+      <input type="email" placeholder="Your email" style="padding:12px 16px;border:1px solid #e5e7eb;border-radius:8px;font-size:16px;" />
+      <textarea placeholder="Your message" rows="4" style="padding:12px 16px;border:1px solid #e5e7eb;border-radius:8px;font-size:16px;resize:vertical;"></textarea>
+      <button type="submit" style="padding:12px 24px;background:var(--color-primary);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:500;">Send Message</button>
+    </form>
+  `;
+
+  const innerBlocks: BlockNode[] = [
+    { name: 'core/heading', attributes: { level: 2, textAlign: 'center' }, innerContent: [title] },
+  ];
+  if (description) innerBlocks.push({ name: 'core/paragraph', attributes: { align: 'center' }, innerContent: [description] });
+  innerBlocks.push({ name: 'core/spacer', attributes: { height: '40px' }, innerContent: [] });
+  innerBlocks.push({ name: 'core/columns', attributes: { isStackedOnMobile: true }, innerBlocks: [
+    { name: 'core/column', attributes: { width: '40%' }, innerBlocks: [
+      { name: 'core/heading', attributes: { level: 4 }, innerContent: ['Get in Touch'] },
+      { name: 'core/html', attributes: {}, innerContent: [contactInfo || '<p>Contact information coming soon.</p>'] },
+    ], innerContent: [null, null] },
+    { name: 'core/column', attributes: { width: '60%' }, innerBlocks: [
+      { name: 'core/html', attributes: {}, innerContent: [formHtml] },
+    ], innerContent: [null] },
+  ], innerContent: [null, null] });
+
+  return { name: 'core/group', attributes: { layout: { type: 'constrained' }, style: { spacing: { padding: { top: '80px', bottom: '80px' } } } }, innerBlocks, innerContent: innerBlocks.map(() => null) };
+}
+
+function createCenteredContact(config: ContactConfig): BlockNode {
+  const { title, description, email, phone, address } = config;
+  
+  let contactInfo = '<div style="display:flex;justify-content:center;gap:32px;flex-wrap:wrap;margin-bottom:32px;">';
+  if (email) contactInfo += `<span style="display:flex;align-items:center;gap:8px;">📧 ${email}</span>`;
+  if (phone) contactInfo += `<span style="display:flex;align-items:center;gap:8px;">📞 ${phone}</span>`;
+  if (address) contactInfo += `<span style="display:flex;align-items:center;gap:8px;">📍 ${address}</span>`;
+  contactInfo += '</div>';
+
+  const formHtml = `
+    <form style="display:flex;flex-direction:column;gap:16px;max-width:500px;margin:0 auto;">
+      <input type="text" placeholder="Your name" style="padding:12px 16px;border:1px solid #e5e7eb;border-radius:8px;font-size:16px;" />
+      <input type="email" placeholder="Your email" style="padding:12px 16px;border:1px solid #e5e7eb;border-radius:8px;font-size:16px;" />
+      <textarea placeholder="Your message" rows="4" style="padding:12px 16px;border:1px solid #e5e7eb;border-radius:8px;font-size:16px;resize:vertical;"></textarea>
+      <button type="submit" style="padding:12px 24px;background:var(--color-primary);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:500;">Send Message</button>
+    </form>
+  `;
+
+  const innerBlocks: BlockNode[] = [
+    { name: 'core/heading', attributes: { level: 2, textAlign: 'center' }, innerContent: [title] },
+  ];
+  if (description) innerBlocks.push({ name: 'core/paragraph', attributes: { align: 'center' }, innerContent: [description] });
+  innerBlocks.push({ name: 'core/spacer', attributes: { height: '24px' }, innerContent: [] });
+  if (email || phone || address) innerBlocks.push({ name: 'core/html', attributes: {}, innerContent: [contactInfo] });
+  innerBlocks.push({ name: 'core/html', attributes: {}, innerContent: [formHtml] });
+
+  return { name: 'core/group', attributes: { layout: { type: 'constrained' }, style: { spacing: { padding: { top: '80px', bottom: '80px' } } } }, innerBlocks, innerContent: innerBlocks.map(() => null) };
+}
+
+export type SectionType = 'hero' | 'features' | 'cta' | 'testimonials' | 'gallery' | 'contact' | 'footer' | 'pricing' | 'team' | 'stats' | 'logos' | 'faq' | 'process' | 'portfolio' | 'blog' | 'newsletter';
 
 export interface SectionInput {
   type: SectionType;
@@ -1970,10 +2359,22 @@ export function createPatternFromSection(section: SectionInput): BlockNode | nul
     case 'faq':
       return createFAQPattern(section.config as unknown as FAQConfig);
 
-    case 'gallery':
+    case 'process':
+      return createProcessPattern(section.config as unknown as ProcessConfig);
+
+    case 'portfolio':
+      return createPortfolioPattern(section.config as unknown as PortfolioConfig);
+
+    case 'blog':
+      return createBlogPreviewPattern(section.config as unknown as BlogPreviewConfig);
+
+    case 'newsletter':
+      return createNewsletterPattern(section.config as unknown as NewsletterConfig);
+
     case 'contact':
-      // These section types are not yet implemented
-      // Return a placeholder group
+      return createContactPattern(section.config as unknown as ContactConfig);
+
+    case 'gallery':
       return {
         name: 'core/group',
         attributes: {
